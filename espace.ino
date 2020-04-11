@@ -1,153 +1,13 @@
 
+#include "config.h"
 #include <mcp_can.h>
 #include <SPI.h>
 #include "Servo.h"
+// #include "MyTimer.h"
+#include "NeoTimer.h"
+#include <CLI.h>
 // #include <HardwareSerial.h>
 // #include <Serial.h>
-
-// SPI :
-// pin 49: Digital Pot (logique inversé)
-// pin 50: MISO
-// pin 51: MOSI
-// pin 52: SCLK
-// pin 53 Can Bus (logique inversé)
-#define PIN_SPI_CS_DP 49
-#define PIN_SPI_CS_CAN 53
-
-//Can Bus
-// Pin 2: interuption (données disponible)
-
-#define PIN_CB_DATA 2
-#define CB_ID_FP 0x00
-#define CB_ADDRESS_MA 0x00
-#define CB_ADDRESS_FP 0x00
-#define CB_ID_BAT 0x00
-#define CB_ADDRESS_BAT 0x00
-
-// Commande au volant
-// pin 48: A1
-// pin 47: A2
-// pin 46: A3
-// pin 45: B1
-// pin 44: B2
-// pin 43: B3
-
-// B1 => A3 Bouton Bas
-// B1 => B3 Vol -
-// B1 => A1 Vol +
-// B2 => A3 Btn haut droit
-// B2 => B3 Btn haut gauche
-// A2 => A3 Molette Cran 1  A2 = blanc
-// A2 => B3 Molette Cran 2
-// A2 => A1 Molette Cran 3
-
-#define CV_A1 48 // input = Vol + / Molette 3
-#define CV_A2 47 // Output =  Molette 1 2 3
-#define CV_A3 46 // input = Btn bas / Btn Haut Droite / molette 1
-#define CV_B1 45 // Output = Btn bas / vol + / Vol +
-#define CV_B2 44 // Output = Btn Haut droite / Btn haut gauche
-#define CV_B3 43 // input = Vol + / Molette 3
-
-#define NONE 0
-#define CV_BTN_DOWN 1
-#define CV_VOL_DOWN 2
-#define CV_VOL_UP 4
-#define CV_BTN_UP_RGT 8
-#define CV_BTN_UP_LFT 16
-#define CV_MOL_1 64
-#define CV_MOL_2 128
-#define CV_MOL_3 256
-#define CV_VOL_UP_DOWN 6
-#define CV_BTN_UP_LFT_BTN_DOWN 9
-#define CV_BTN_UP_LFT_RGT 24
-#define CV_MASK_CURSOR 1 + 2 + 4
-#define CV_MASK_MOL 64 + 128 + 256
-#define CV_MASK_ALL 0xFFFF
-
-// commande autoradio
-// pin 42: relais Tip
-// pin 41: relais Ring
-
-#define AR_TIP 42
-#define AR_RING 41
-
-// source / 2 sec = off => 1.2
-// MUTE => 3.5
-// display => 5.75
-// next => 8
-// prev => 11.25
-// Vol up => 16
-// Vol down => 24
-// band => 62.7
-
-#define AR_NEED_RING 256
-
-#define NONE 0
-#define AR_SOURCE 3
-#define AR_MUTE 9
-#define AR_DISPLAY 14
-#define AR_NEXT 20
-#define AR_PREV 28
-#define AR_VOL_UP 41
-#define AR_VOL_DOWN 61
-#define AR_BAND 160
-#define AR_PRESET_UP 20 + AR_NEED_RING
-#define AR_PRESET_DOWN 28 + AR_NEED_RING
-
-#define POT0_SEL 0x11
-#define POT1_SEL 0x12
-#define BOTH_POT_SEL 0x13
-
-#define POT0_SHUTDOWN 0x21
-#define POT1_SHUTDOWN 0x22
-#define BOTH_POT_SHUTDOWN 0x23
-
-// pin 40: relais frein de parking
-// pin 39: relais marche arriere
-
-#define PIN_AR_FP 40
-#define PIN_AR_MA 39
-
-//retroviseur
-// pin 38: relais ouverture retro
-// pin 37: relais fermeture retro
-
-#define PIN_RV_OPEN 38
-#define PIN_RV_CLOSE 37
-#define RV_TIME 3000 //temp d ouverture et fermeture du retroviseur en ms
-
-//Trape autoradio
-// pin 4 (PWM)
-// pin 35 relais alime servo
-
-#define PIN_TRAP_PWM 4
-#define PIN_TRAP_ALIM 35
-
-#define TRAP_STOP 45
-#define TRAP_SPEED 45
-#define TRAP_TIME 1000
-
-#define TRAP_UP TRAP_STOP + TRAP_SPEED
-#define TRAP_DOWN TRAP_STOP - TRAP_SPEED
-
-//resistance chauffante
-// pin 38 : relais
-// pin 37 : relais
-// pin 36 : relais
-
-#define PIN_RC_1 38
-#define PIN_RC_23 37
-#define PIN_RC_4 36
-
-#define RC_OFF 0
-#define RC_1 1
-#define RC_23 2
-#define RC_4 4
-#define RC_14 5
-#define RC_ALL 7
-
-#define DEBOUNCE 20
-#define LONG_DEBOUNCE 80
 
 inline bool Debounce(unsigned long time, unsigned long debounce = DEBOUNCE)
 {
@@ -157,16 +17,21 @@ inline bool Debounce(unsigned long time, unsigned long debounce = DEBOUNCE)
 //gestion de la commande au volant
 //la methode setup() doit etre appele dans la fonction d initialisation
 //la methode  loop() doit etre appele dans chaque iteration de le fonction loop()
-class CAV
+class CAV : CLI_Command
 {
 public:
   String data;
   //constructeur
-  CAV()
+  CAV(CLI &cli) : CLI_Command(cli,
+                              PSTR("cav"),
+                              PSTR("Commande au volant"),
+                              PSTR("Usage:\t\tcav <commande>\n"
+                                   "Where:\t<commande>\t debug, std"))
   {
     stats = 0;
     cursor = 0;
     debounce = 0;
+    _debug = 0;
   };
 
   //methode d intitialisation a apeler dans setup()
@@ -273,10 +138,18 @@ public:
   // recuperation de l action a effectuer en fonction de l'etat de la commande au volant
   int get_action()
   {
+    static int debug = NONE;
     static int molette = 0;
     int ret = NONE;
-    int debounce_stats = get_stats();
-    int debounce_long_stats = get_long_stats();
+    unsigned long debounce_stats = get_stats();
+    unsigned long debounce_long_stats = get_long_stats();
+
+    if (_debug == 1)
+    {
+      Serial.print("cav = ");
+      Serial.println(debounce_stats, BIN);
+      Serial.println(_debug);
+    }
 
     int new_molette = debounce_stats & CV_MASK_MOL;
     if (new_molette != molette && ((new_molette == CV_MOL_1) || (new_molette == CV_MOL_2) || (new_molette == CV_MOL_3))) // si la molette a ete tournee
@@ -284,73 +157,130 @@ public:
       if (molette == CV_MOL_3 && new_molette == CV_MOL_1) // 3 -> 1
       {
         ret = AR_NEXT;
+        if (_debug != 0 && debug != ret)
+          Serial.println("cav Next");
         // Serial.println("Next");
       }
       else if (molette == CV_MOL_1 && new_molette == CV_MOL_3) // 1 -> 3
       {
         ret = AR_PREV;
-        // Serial.println("Prev");
+        if (_debug != 0 && debug != ret)
+          Serial.println("cav Prev");
       }
       else if (new_molette > molette) // 1 -> 2 ou 2 -> 3
       {
         ret = AR_NEXT;
-        // Serial.println("next");
+        if (_debug != 0 && debug != ret)
+          Serial.println("cav next");
       }
       else if (new_molette < molette) // 3 -> 2 ou 2 -> 1
       {
         ret = AR_PREV;
-        // Serial.println("prev");
+        if (_debug != 0 && debug != ret)
+          Serial.println("cav prev");
       }
       molette = new_molette;
     }
     else if ((debounce_stats & CV_VOL_UP_DOWN) == CV_VOL_UP_DOWN) // Bouton VOL+ et VOL-
     {
       ret = AR_MUTE;
-      // Serial.println("Mute");
+      if (_debug != 0 && debug != ret)
+        Serial.println("cav Mute");
     }
     else if ((debounce_stats & CV_BTN_UP_LFT_RGT) == CV_BTN_UP_LFT_RGT) // Bouton haut droite et gauche
     {
       ret = AR_BAND;
-      // Serial.println("Band");
+      if (_debug != 0 && debug != ret)
+        Serial.println("cav Band");
     }
     else if ((debounce_stats & CV_BTN_UP_LFT_BTN_DOWN) == CV_BTN_UP_LFT_BTN_DOWN) // Bouton haut droite et boutons bas
     {
       ret = AR_DISPLAY;
-      // Serial.println("Display");
+      if (_debug != 0 && debug != ret)
+        Serial.println("cav Display");
     }
     else if (debounce_long_stats & CV_BTN_DOWN) // Bouton bas
     {
       ret = AR_SOURCE;
-      // Serial.println("Source");
+      if (_debug != 0 && debug != ret)
+        Serial.println("cav Source");
     }
     else if (debounce_long_stats & CV_VOL_DOWN) // Volume -
     {
       ret = AR_VOL_DOWN;
-      // Serial.println("Vol-");
+      if (_debug != 0 && debug != ret)
+        Serial.println("cav Vol-");
     }
     else if (debounce_long_stats & CV_VOL_UP) // Volume +
     {
       ret = AR_VOL_UP;
-      // Serial.println("Vol+");
+      if (_debug != 0 && debug != ret)
+        Serial.println("cav Vol+");
     }
     else if (debounce_long_stats & CV_BTN_UP_RGT) // Bouton haut droite
     {
       ret = AR_PRESET_UP;
-      // Serial.println("preset +");
+      if (_debug != 0 && debug != ret)
+        Serial.println("cav preset +");
     }
     else if (debounce_long_stats & CV_BTN_UP_LFT) // Bouton haut gauche
     {
       ret = AR_PRESET_DOWN;
-      // Serial.println("preset-");
+      if (_debug != 0 && debug != ret)
+        Serial.println("cav preset-");
     }
 
+    debug = ret;
     return ret;
+  }
+
+  // CLI set parametre
+  bool setparams(const char *params)
+  {
+    _params = params;
+    return (params);
+  }
+  // CLI Execute
+  bool execute(CLI &cli)
+  {
+    if (strcmp(_params, "debug") == 0)
+    {
+      if (_debug == 1)
+      {
+        Serial.println("Debug = off");
+        _debug = 0;
+      }
+      else
+      {
+        Serial.println("Debug = on");
+        _debug = 1;
+      }
+    }
+    else if (strcmp(_params, "display") == 0)
+    {
+      if (_debug == 2)
+      {
+        Serial.println("display = off");
+        _debug = 0;
+      }
+      else
+      {
+        Serial.println("display = on");
+        _debug = 2;
+      }
+    }
+
+    // cli.print_P(PSTR("Autoradio "));
+    // cli.println(_params);
+    return false;
   }
 
 private:
   int stats;
   unsigned int cursor;
   unsigned long debounce;
+  const char *_params;
+  uint8_t _debug;
 
   inline void UsePin(int Pin)
   {
@@ -365,52 +295,80 @@ private:
   }
 };
 
-class AutoRadio
+class AutoRadio : CLI_Command
 {
 public:
-  // AutoRadio() {}
+  AutoRadio(CLI &cli) : CLI_Command(cli,
+                                    PSTR("ar"),
+                                    PSTR("Auto Radio"),
+                                    PSTR("Usage:\t\tAR <commande>\n"
+                                         "Where:\t<commande>\t vol+, vol-, mute, ..."))
+  {
+    _debug = 0;
+  };
 
   void setup()
   {
     //audio
-    pinMode(AR_TIP, OUTPUT);  // set pin to output
-    pinMode(AR_RING, OUTPUT); // set pin to output
-    digitalWrite(AR_TIP, LOW);
-    digitalWrite(AR_RING, LOW);
+    pinMode(AR_TIP, OUTPUT);     // set pin to output
+    pinMode(AR_RING, OUTPUT);    // set pin to output
+    digitalWrite(AR_TIP, HIGH);  //logique inverse
+    digitalWrite(AR_RING, HIGH); //logique inverse
 
     //relais marche arriere et frein de parc
-    pinMode(PIN_AR_FP, OUTPUT); // set pin to output
-    pinMode(PIN_AR_MA, OUTPUT); // set pin to output
-    digitalWrite(PIN_AR_FP, LOW);
-    digitalWrite(PIN_AR_MA, LOW);
+    pinMode(PIN_AR_FP, OUTPUT);    // set pin to output
+    pinMode(PIN_AR_MA, OUTPUT);    // set pin to output
+    digitalWrite(PIN_AR_FP, HIGH); //logique inverse
+    digitalWrite(PIN_AR_MA, HIGH); //logique inverse
   }
 
-  void set_audio(int val)
+  void loop()
+  {
+    if (this->_timer.front())
+    {
+      digitalWrite(AR_TIP, HIGH);
+      digitalWrite(AR_RING, HIGH);
+      if (_debug == 1)
+        Serial.println("None");
+    }
+  }
+
+  void
+  set_audio(int val)
   {
     static int old_val = 0;
-    if (old_val != val)
+    // if (old_val != val)
     {
-      if (val == NONE)
+      // if (val == NONE)
+      // {
+      //   digitalWrite(AR_TIP, HIGH);
+      //   digitalWrite(AR_RING, HIGH);
+      // }
+      // else
+      if (val < AR_NEED_RING && val != NONE)
       {
-        digitalWrite(AR_TIP, LOW);
-        digitalWrite(AR_RING, LOW);
-      }
-      else if (val < AR_NEED_RING)
-      {
-        digitalWrite(AR_TIP, LOW);
-        digitalWrite(AR_RING, LOW);
-        set_pot(val);
-        digitalWrite(AR_TIP, HIGH);
-      }
-      else if (val >= AR_NEED_RING)
-      {
-        digitalWrite(AR_TIP, LOW);
-        digitalWrite(AR_RING, LOW);
-        set_pot(val - AR_NEED_RING);
         digitalWrite(AR_TIP, HIGH);
         digitalWrite(AR_RING, HIGH);
+        set_pot(val);
+        digitalWrite(AR_TIP, LOW);
+        this->_timer.reset();
+        this->_timer.start(100);
+        if (_debug == 1)
+          Serial.println(val);
       }
+      else if (val >= AR_NEED_RING && val != NONE)
+      {
+        digitalWrite(AR_TIP, HIGH);
+        digitalWrite(AR_RING, HIGH);
+        set_pot(val - AR_NEED_RING);
+        digitalWrite(AR_TIP, LOW);
+        digitalWrite(AR_RING, LOW);
 
+        this->_timer.reset();
+        this->_timer.start(100);
+        if (_debug == 1)
+          Serial.println(val);
+      }
       old_val = val;
     }
   }
@@ -438,155 +396,326 @@ public:
       digitalWrite(PIN_AR_MA, LOW);
     }
   }
+  // CLI set parametre
+  bool setparams(const char *params)
+  {
+    _params = params;
+    return (params);
+  }
+  // CLI Execute
+  bool execute(CLI &cli)
+  {
+    if (strcmp(_params, "debug") == 0)
+    {
+      if (_debug == 1)
+      {
+        cli.println("Debug = off");
+        _debug = 0;
+      }
+      else
+      {
+        cli.println("Debug = on");
+        _debug = 1;
+      }
+    }
+    if (strcmp(_params, "none") == 0)
+    {
+      cli.println("action = NONE");
+      set_audio(NONE);
+    }
+    if (strcmp(_params, "band") == 0)
+    {
+      cli.println("action = BAND");
+      set_audio(AR_BAND);
+    }
+    if (strcmp(_params, "display") == 0)
+    {
+      cli.println("action = DISPLAY");
+      set_audio(AR_DISPLAY);
+    }
+    if (strcmp(_params, "mute") == 0)
+    {
+      cli.println("action = MUTE");
+      set_audio(AR_MUTE);
+    }
+    if (strcmp(_params, "next") == 0)
+    {
+      cli.println("action = NEXT");
+      set_audio(AR_NEXT);
+    }
+    if (strcmp(_params, "preset-") == 0)
+    {
+      cli.println("action = Preset down");
+      set_audio(AR_PRESET_DOWN);
+    }
+    if (strcmp(_params, "preset+") == 0)
+    {
+      cli.println("action = preset UP");
+      set_audio(AR_PRESET_UP);
+    }
+    if (strcmp(_params, "prev") == 0)
+    {
+      cli.println("action = prev");
+      set_audio(AR_PREV);
+    }
+    if (strcmp(_params, "source") == 0)
+    {
+      cli.println("action = source");
+      set_audio(AR_SOURCE);
+    }
+    if (strcmp(_params, "vol-") == 0)
+    {
+      cli.println("action = vol -");
+      set_audio(AR_VOL_DOWN);
+      // trape.down();
+    }
+    if (strcmp(_params, "vol+") == 0)
+    {
+      cli.println("action = Vol +");
+      set_audio(AR_VOL_UP);
+    }
+
+    if (strcmp(_params, "ma") == 0)
+    {
+      digitalWrite(PIN_AR_MA, !digitalRead(PIN_AR_MA));
+      cli.print("marche_arriere = ");
+      cli.println(digitalRead(PIN_AR_MA));
+    }
+
+    if (strcmp(_params, "fp") == 0)
+    {
+      digitalWrite(PIN_AR_FP, !digitalRead(PIN_AR_FP));
+      cli.print("frein_parking = ");
+      cli.println(digitalRead(PIN_AR_FP));
+    }
+
+    // cli.print_P(PSTR("Autoradio "));
+    // cli.println(_params);
+    return false;
+  }
 
 private:
+  const char *_params;
+  uint8_t _debug;
+  NeoTimer _timer;
   void set_pot(int val)
   {
     val = constrain(val, 0, 255);
     // set the CS pin to low to select the chip:
     digitalWrite(PIN_SPI_CS_DP, LOW);
     // send the command and value via SPI:
-    SPI.transfer(POT0_SEL);
+    // SPI.transfer(POT1_SEL);
+    // SPI.transfer(val);
+    SPI.transfer(BOTH_POT_SEL);
     SPI.transfer(val);
     // Set the CS pin high to execute the command:
     digitalWrite(PIN_SPI_CS_DP, HIGH);
   }
 };
 
-class Retroviseur
+class Retroviseur : CLI_Command
 {
 public:
+  Retroviseur(CLI &cli) : CLI_Command(cli,
+                                      PSTR("retro"),
+                                      PSTR("retroviseur"),
+                                      PSTR("Usage:\tretro <commande>\n"
+                                           "Where:\t<commande>\t open, close"))
+  {
+    _open = false;
+  };
+
   void setup()
   {
-    //audio
     pinMode(PIN_RV_CLOSE, OUTPUT); // set pin to output
     pinMode(PIN_RV_OPEN, OUTPUT);  // set pin to output
     digitalWrite(PIN_RV_CLOSE, LOW);
     digitalWrite(PIN_RV_OPEN, LOW);
-    active = false;
+    // open(); //todo
   }
 
   void loop()
   {
-    if (active)
-    {
-      int temp = millis() - l_time;
-      l_time = millis();
-      if (temp > 0 && l_wait > temp)
-      {
-        l_wait -= temp;
-      }
-      else if (temp > 0)
-      {
-        active = false;
-        callback();
-      }
-    }
+    if (timer.front())
+      stop();
   }
 
-  void open(bool value)
+  void open()
   {
-    if (value)
+    if (!_open)
     {
       digitalWrite(PIN_RV_CLOSE, LOW);
       digitalWrite(PIN_RV_OPEN, HIGH);
-      stop_after(RV_TIME);
-    }
-    else
-    {
-      digitalWrite(PIN_RV_CLOSE, LOW);
-      digitalWrite(PIN_RV_OPEN, LOW);
+      timer.start(RV_TIME);
+      _open = true;
     }
   }
 
-  void close(bool value)
+  void close()
   {
-    if (value)
+    if (_open)
     {
       digitalWrite(PIN_RV_OPEN, LOW);
       digitalWrite(PIN_RV_CLOSE, HIGH);
-      stop_after(RV_TIME);
-    }
-    else
-    {
-      digitalWrite(PIN_RV_CLOSE, LOW);
-      digitalWrite(PIN_RV_OPEN, LOW);
+      timer.start(RV_TIME);
+      _open = false;
     }
   }
 
-  void callback()
+  void stop()
   {
     digitalWrite(PIN_RV_CLOSE, LOW);
     digitalWrite(PIN_RV_OPEN, LOW);
   }
 
-  void stop_after(unsigned long int wait)
+  // CLI set parametre
+  bool setparams(const char *params)
   {
-    l_wait = wait;
-    active = true;
-    unsigned l_time = millis();
+    _params = params;
+    return (params);
+  }
+  // CLI Execute
+  bool execute(CLI &cli)
+  {
+    if (strcmp(_params, "open") == 0)
+    {
+      Serial.println("action = open");
+      open();
+    }
+    else if (strcmp(_params, "close") == 0)
+    {
+      Serial.println("action = close");
+      close();
+    }
+
+    // cli.print_P(PSTR("Autoradio "));
+    // cli.println(_params);
+    return false;
   }
 
 private:
-  bool active;
-  unsigned long int l_time;
-  int l_wait;
+  const char *_params;
+  NeoTimer timer;
+  bool _open;
+  // bool active;
+  // unsigned long int l_time;
+  // int l_wait;
   void *l_arg;
 };
 
-class Resistance
+class Resistance : CLI_Command
 {
 public:
-  // AutoRadio() {}
+  Resistance(CLI &cli) : CLI_Command(cli,
+                                     PSTR("res"),
+                                     PSTR("resistance"),
+                                     PSTR("Usage:\tresistance <commande>\n"
+                                          "Where:\t<commande>\t 0, 1, 2, 3, 23, 4")){};
 
   void setup()
   {
-    //audio
-    pinMode(PIN_RC_1, OUTPUT);  // set pin to output
-    pinMode(PIN_RC_23, OUTPUT); // set pin to output
-    pinMode(PIN_RC_4, OUTPUT);  // set pin to output
-    digitalWrite(PIN_RC_1, LOW);
-    digitalWrite(PIN_RC_23, LOW);
-    digitalWrite(PIN_RC_4, LOW);
+    pinMode(PIN_I_RC_1, INPUT);      // set pin to input
+    pinMode(PIN_I_RC_23, INPUT);     // set pin to input
+    pinMode(PIN_I_RC_4, INPUT);      // set pin to input
+    digitalWrite(PIN_I_RC_1, HIGH);  //active pullup
+    digitalWrite(PIN_I_RC_23, HIGH); //active pullup
+    digitalWrite(PIN_I_RC_4, HIGH);  //active pullup
+
+    pinMode(PIN_O_RC_1, OUTPUT);     // set pin to output
+    pinMode(PIN_O_RC_23, OUTPUT);    // set pin to output
+    pinMode(PIN_O_RC_4, OUTPUT);     // set pin to output
+    digitalWrite(PIN_O_RC_1, HIGH);  //logique inverse
+    digitalWrite(PIN_O_RC_23, HIGH); //logique inverse
+    digitalWrite(PIN_O_RC_4, HIGH);  //logique inverse
   }
 
   //defini quels resistance doive etre allumé
   //
   void set(int mode)
   {
-    if (mode & PIN_RC_1)
+    if (mode & PIN_O_RC_1)
     {
-      digitalWrite(PIN_RC_1, HIGH);
+      digitalWrite(PIN_O_RC_1, LOW);
     }
     else
     {
-      digitalWrite(PIN_RC_1, LOW);
+      digitalWrite(PIN_O_RC_1, HIGH);
     }
 
     if (mode & RC_23)
     {
-      digitalWrite(PIN_RC_23, HIGH);
+      digitalWrite(PIN_O_RC_23, LOW);
     }
     else
     {
-      digitalWrite(PIN_RC_23, LOW);
+      digitalWrite(PIN_O_RC_23, HIGH);
     }
 
     if (mode & RC_4)
     {
-      digitalWrite(PIN_RC_4, HIGH);
+      digitalWrite(PIN_O_RC_4, LOW);
     }
     else
     {
-      digitalWrite(PIN_RC_4, LOW);
+      digitalWrite(PIN_O_RC_4, HIGH);
     }
+  } // CLI set parametre
+  bool setparams(const char *params)
+  {
+    _params = String(params).toInt();
+    return (params);
   }
+  // CLI Execute
+  bool execute(CLI &cli)
+  {
+    if (_params == 0)
+    {
+      Serial.println("resistance = 0");
+      set(RC_OFF);
+    }
+    else if (_params == 1)
+    {
+      Serial.println("resistance = 1");
+      set(PIN_O_RC_1);
+    }
+    else if (_params == 2)
+    {
+      Serial.println("resistance = 23");
+      set(PIN_O_RC_23);
+    }
+    else if (_params == 3)
+    {
+      Serial.println("resistance = 23");
+      set(PIN_O_RC_23);
+    }
+    else if (_params == 23)
+    {
+      Serial.println("resistance = 23");
+      set(PIN_O_RC_23);
+    }
+    else if (_params == 4)
+    {
+      Serial.println("resistance = 4");
+      set(PIN_O_RC_4);
+    }
+
+    // cli.print_P(PSTR("Autoradio "));
+    // cli.println(_params);
+    return false;
+  }
+
+private:
+  int _params;
 };
 
-class Trape
+class Trape : CLI_Command
 {
 public:
-  // Trape() {}
+  Trape(CLI &cli) : CLI_Command(cli,
+                                PSTR("trape"),
+                                PSTR("trape"),
+                                PSTR("Usage:\ttrape <commande>\n"
+                                     "Where:\t<commande>\t open, close")){};
 
   void setup()
   {
@@ -599,25 +728,28 @@ public:
 
   void loop()
   {
-    if (active)
-    {
-      int temp = millis() - l_time;
-      l_time = millis();
-      if (temp > 0 && l_wait > temp)
-      {
-        l_wait -= temp;
-      }
-      else if (temp > 0)
-      {
-        active = false;
-        stop();
-      }
-    }
+    //   if (active)
+    //   {
+    //     int temp = millis() - l_time;
+    //     l_time = millis();
+    //     if (temp > 0 && l_wait > temp)
+    //     {
+    //       l_wait -= temp;
+    //     }
+    //     else if (temp > 0)
+    //     {
+    //       active = false;
+    //       stop();
+    //     }
+    //   }
+    if (timer.front())
+      stop();
   }
 
   //defini quels resistance doive etre allumé
   //
-  void up()
+  void
+  up()
   {
     digitalWrite(PIN_TRAP_ALIM, HIGH);
     servo.write(TRAP_UP);
@@ -635,9 +767,10 @@ public:
 
   void call_after(unsigned long int wait)
   {
-    l_wait = wait;
-    active = true;
-    l_time = millis();
+    // l_wait = wait;
+    // active = true;
+    // l_time = millis();
+    timer.start(wait);
   }
 
   void stop()
@@ -646,9 +779,36 @@ public:
     digitalWrite(PIN_TRAP_ALIM, LOW);
   }
 
+  // CLI set parametre
+  bool setparams(const char *params)
+  {
+    _params = params;
+    return (params);
+  }
+  // CLI Execute
+  bool execute(CLI &cli)
+  {
+    if (strcmp(_params, "open") == 0)
+    {
+      Serial.println("action = open");
+      up();
+    }
+    else if (strcmp(_params, "close") == 0)
+    {
+      Serial.println("action = close");
+      down();
+    }
+
+    // cli.print_P(PSTR("Autoradio "));
+    // cli.println(_params);
+    return false;
+  }
+
   Servo servo;
 
 private:
+  const char *_params;
+  NeoTimer timer;
   bool sleep;
   bool active;
   unsigned long int l_time;
@@ -656,54 +816,274 @@ private:
   void *l_arg;
 };
 
-class CAN_ESPACE
+volatile int Flag_Recv;
+/* 
+     *  ISR CAN (Routine de Service d'Interruption)
+     *  le flag IRQ monte quand au moins un message est reçu
+     *  le flag IRQ ne retombe QUE si tous les messages sont lus
+     */
+static void MCP2515_ISR()
+{
+  Flag_Recv = 1;
+}
+
+class CAN_ESPACE : CLI_Command
 {
 public:
-  CAN_ESPACE() : can(PIN_SPI_CS_CAN)
+  CAN_ESPACE(CLI &cli) : can(PIN_SPI_CS_CAN), CLI_Command(cli,
+                                                          PSTR("can"),
+                                                          PSTR("CAN Bus"),
+                                                          PSTR("Usage:\t\tcan <commande>\n"
+                                                               "Where:\t<commande>\t debug, std"))
+
   {
-  }
+    // _cli = cli;
+    _debug = false;
+    _init = false;
+    frein_parking = false;
+    marche_arriere = false;
+    embrayage = false;
+    vitesse = false;
+    baterie = 0;
+  };
 
   void setup()
   {
-    can.begin(CAN_250KBPS);
     pinMode(PIN_CB_DATA, INPUT);
+    Serial.println("CAN BUS init !");
+    int loop = 3;
+    while (loop >= 0)
+    {
+      Serial.println("CAN BUS init !");
+      if (CAN_OK == can.begin(CAN_250KBPS))
+      // initialisation du can bus : baudrate = 250k
+      {
+        Serial.println(F("CAN BUS init ok!"));
+        _init = true;
+        break; // on sort du while.
+      }
+      else
+      {
+        loop--;
+        Serial.println(F("CAN BUS init echec !"));
+        Serial.println(F("Init CAN BUS a nouveau"));
+      }
+      delay(100);
+    }
 
-    frein_parking = false;
-    marche_arriere = false;
-    baterie = 0;
+    attachInterrupt(0, MCP2515_ISR, FALLING); // interrupt 0 (pin 2)
   }
+
+  // address 766
+  //          octet 0 porte 0x8 Av G 0x10 AV D 0x80 coffre 0x20 ar G 0x40 ar D
+  //          octet 2 condanation 0x30 telecommand 0x20 interieur
+  // address 766
+  //          octet 4 Batterie 0.202857x * 8.8714
 
   void loop()
   {
-    if (!digitalRead(PIN_CB_DATA)) //if data
+    if (Flag_Recv) //if data
     {
+      if (!_init)
+        this->setup();
+      // Serial.println("receve interupt");
+      Flag_Recv = false;
       while (can.checkReceive() == CAN_MSGAVAIL)
       {
+        // Serial.println("receve data");
         can.readMsgBuf(&len, rxBuf); // Read data: len = data length, buf = data byte(s)
         rxId = can.getCanId();
-        // Serial.print("ID: ");
-        // Serial.print(rxId, HEX);
-        // Serial.print("  Data: ");
-        for (int i = 0; i < len; i++) // Print each byte of the data
+
+        if (rxId == 0x766 && len == 8)
         {
-          if (rxBuf[i] < 0x10) // If data byte is less than 0x10, add a leading zero
-          {
-            Serial.print("0");
-          }
-          Serial.print(rxBuf[i], HEX);
-          Serial.print(" ");
+
+          porte = rxBuf[0];
+
+          if ((rxBuf[1] & 0x02) != 0)
+            pre_contact = true;
+          else
+            pre_contact = false;
+
+          if ((rxBuf[1] & 0x04) != 0)
+            contact = true;
+          else
+            contact = false;
+
+          if ((rxBuf[2] & 0x10) != 0)
+            verou = true;
+          else
+            verou_tel = false;
+
+          if ((rxBuf[2] & 0x20) != 0)
+            verou = true;
+          else
+            verou = false;
+
+          if ((rxBuf[7] & 0x40) != 0)
+            embrayage = true;
+          else
+            embrayage = false;
+
+          if (contact && (rxBuf[5] & 0x01) != 0)
+            vitesse = true;
+          else
+            vitesse = false;
+
+          if (contact && (rxBuf[6] & 0x10) != 0)
+            marche_arriere = true;
+          else
+            marche_arriere = false;
         }
-        Serial.println();
+
+        if (rxId == 0x711 && len == 8)
+        {
+          if ((rxBuf[0] & 0x04) != 0)
+            frein_parking = true;
+          else
+            frein_parking = false;
+        }
+
+        if (rxId == 0x0FA && len == 7)
+        {
+          accelerateur = rxBuf[3];
+          regime = (rxBuf[0] << 8) + rxBuf[1];
+        }
+
+        if (rxId == 0x449 && len == 6)
+        {
+          baterie = rxBuf[4];
+          // Serial.print("baterie = ");
+          // Serial.println(rxBuf[4], BIN);
+          // Serial.print("baterie = ");
+          // Serial.println(rxBuf[4], HEX);
+        }
+
+        if (_debug)
+        {
+          if (rxId == 0x766)
+          {
+            if (embrayage)
+              Serial.println("Embrayage");
+
+            if (vitesse)
+              Serial.println("Vitesse");
+
+            if (marche_arriere)
+              Serial.println("marche_arriere");
+          }
+
+          if (rxId == 0x711)
+          {
+
+            if (frein_parking)
+              Serial.println("frein_parking");
+          }
+          if (rxId == 0x0FA && len == 7)
+          {
+            Serial.print("accel = ");
+            Serial.println(get_accelerateur());
+            Serial.print("regim = ");
+            Serial.println(get_regime());
+          }
+
+          if (rxId == 0x449 && len == 6)
+          {
+            Serial.print("baterie = ");
+            Serial.print(get_baterie());
+            Serial.println(" V");
+          }
+        }
       }
     }
   };
 
   bool get_frein_parking() { return frein_parking; };
   bool get_marche_arriere() { return marche_arriere; };
-  int get_baterie() { return baterie; };
+  bool get_vitesse() { return vitesse; };
+  bool get_embrayage() { return embrayage; };
+  bool get_contact() { return contact; };
+  bool get_pre_contact() { return pre_contact; };
+  bool get_verou() { return verou; };
+  bool get_verou_tel() { return verou_tel; };
+  unsigned int get_porte() { return porte; };
+  unsigned int get_accelerateur() { return map(accelerateur, 0x08, 0xFD, 0, 100); };
+  unsigned int get_regime() { return regime * 0.125; };
+  float get_baterie() { return contact ? (baterie * 0.085789 + 10.8615) : 0; };
+
+  // CLI set parametre
+  bool setparams(const char *params)
+  {
+    _params = params;
+    return (params);
+  };
+  // CLI Execute
+  bool execute(CLI &cli)
+  {
+    if (strcmp(_params, "debug") == 0)
+    {
+      if (_debug)
+      {
+        Serial.println("can = debug off");
+        _debug = false;
+      }
+      else
+      {
+        Serial.println("can = debug on");
+        _debug = true;
+      }
+    }
+    else if (strcmp(_params, "get") == 0)
+    {
+      if (get_frein_parking())
+        Serial.println("frein de parking");
+
+      if (get_marche_arriere())
+        Serial.println("marche arriere");
+
+      if (get_vitesse())
+        Serial.println("vitesse");
+
+      if (get_embrayage())
+        Serial.println("embrayage");
+
+      if (get_contact())
+        Serial.println("contact");
+
+      if (get_pre_contact())
+        Serial.println("pre_contact");
+
+      if (get_verou())
+        Serial.println("verou");
+
+      if (get_verou_tel())
+        Serial.println("verou_tel");
+
+      if (get_porte())
+        Serial.println("porte");
+
+      Serial.print("accelerateur = ");
+      Serial.print(get_accelerateur());
+      Serial.println(" %");
+
+      Serial.print("regime = ");
+      Serial.print(get_regime());
+      Serial.println(" t/m");
+
+      Serial.print("batterie = ");
+      Serial.print(get_baterie());
+      Serial.println(" V");
+    }
+
+    return false;
+  }
 
 private:
+  bool _init;
+  const char *_params;
+  bool _debug;
+
   MCP_CAN can;
+  CLI &_cli;
 
   long unsigned int rxId;
   unsigned char len = 0;
@@ -711,15 +1091,72 @@ private:
 
   bool frein_parking;
   bool marche_arriere;
-  long int baterie;
+  bool vitesse;
+  bool embrayage;
+  bool contact;
+  bool verou;
+  bool verou_tel;
+  int porte;
+  unsigned int accelerateur;
+  unsigned int regime;
+  bool pre_contact;
+  uint8_t baterie;
 };
 
-CAV commande;
-AutoRadio ar;
-Retroviseur retro;
-Resistance resistance;
-Trape trape;
-CAN_ESPACE canbus;
+class Pin : CLI_Command
+{
+public:
+  Pin(CLI &cli) : CLI_Command(cli,
+                              PSTR("pin"),
+                              PSTR("Pin"),
+                              PSTR("Usage:\t\tpin <pin> <commande>\n"
+                                   "Where:\t<commande>\t 0, 1"))
+
+  {
+    _pin = 0;
+    _stats = 0;
+  };
+
+  // CLI set parametre
+  bool setparams(const char *params)
+  {
+    String val = params;
+    int index = val.indexOf(" ");
+    _pin = val.substring(0, index).toInt();
+    _stats = val.substring(index).toInt();
+    return (params);
+  }
+
+  // CLI Execute
+  bool execute(CLI &cli)
+  {
+    Serial.print(_pin);
+    Serial.print(" = ");
+    Serial.println(digitalRead(_pin));
+    // cli.print_P(PSTR("Autoradio "));
+    // cli.println(_params);
+    return false;
+  }
+
+private:
+  int _pin;
+  int _stats;
+};
+
+// Initialize the Command Line Interface
+const char CLI_banner[] PROGMEM = "ESPACE CLI v1.0 BETA";
+CLI CLI(Serial, CLI_banner); // Initialize CLI, telling it to attach to Serial
+
+CAV commande(CLI);
+AutoRadio ar(CLI);
+Retroviseur retro(CLI);
+Resistance resistance(CLI);
+Trape trape(CLI);
+CAN_ESPACE canbus(CLI);
+Pin pin(CLI);
+
+// Hello_Command Hello(CLI);    // Initialize/Register above defined hello command
+Help_Command Help(CLI); // Initialize/Register (built-in) help command
 
 void setup()
 {
@@ -728,16 +1165,15 @@ void setup()
   pinMode(PIN_SPI_CS_DP, OUTPUT);  // set pin to output
   digitalWrite(PIN_SPI_CS_CAN, HIGH);
   digitalWrite(PIN_SPI_CS_DP, HIGH);
+
+  Serial.begin(115200);
   SPI.begin();        //initialize SPI:
   commande.setup();   //initialise la commande au volant
   ar.setup();         //initialise l autoradio (pot + relais)
   retro.setup();      //initialisation des retroviseurs
   resistance.setup(); //initialisation des resistance chauffante
+  canbus.setup();
   trape.setup();
-  Serial.begin(115200);
-  // commande.setSerial(&Serial);
-
-  Serial.println("End INIT");
 }
 
 void loop()
@@ -745,60 +1181,20 @@ void loop()
   // Serial.println("New Loop");
   // put your main code here, to run repeatedly:
   commande.loop();
+  ar.loop();
   retro.loop();
   trape.loop();
+  canbus.loop();
 
-  // ar.set_audio(commande.get_action());
-  static int old_action = 0;
-  int action = commande.get_action();
-  if (action != old_action)
-  {
-    old_action = commande.get_action();
-    if (action == NONE)
-    {
-      Serial.println("action = NONE");
-    }
-    if (action == AR_BAND)
-      Serial.println("action = BAND");
-    if (action == AR_DISPLAY)
-      Serial.println("action = DISPLAY");
-    if (action == AR_MUTE)
-    {
-      Serial.println("action = MUTE");
-      trape.stop();
-      Serial.println(trape.servo.read());
-    }
-    if (action == AR_NEXT)
-    {
-      Serial.println("action = NEXT");
-      trape.up();
-      Serial.println(trape.servo.read());
-    }
-    if (action == AR_PRESET_DOWN)
-      Serial.println("action = Preset down");
-    if (action == AR_PRESET_UP)
-      Serial.println("action = preset UP");
-    if (action == AR_PREV)
-    {
-      Serial.println("action = prev");
-      trape.down();
-      Serial.println(trape.servo.read());
-    }
-    if (action == AR_SOURCE)
-      Serial.println("action = source");
-    if (action == AR_VOL_DOWN)
-    {
-      Serial.println("action = vol -");
-      trape.servo.write(trape.servo.read() - 1);
-      Serial.println(trape.servo.read());
-      // trape.down();
-    }
-    if (action == AR_VOL_UP)
-    {
-      Serial.println("action = Vol +");
-      trape.servo.write(trape.servo.read() + 1);
-      Serial.println(trape.servo.read());
-      // trape.up();
-    }
-  }
+  CLI.process();
+
+  ar.set_audio(commande.get_action());
+  // ar.set_FP(canbus.get_frein_parking());
+  // ar.set_MA(canbus.get_marche_arriere());
+
+  //gestion retroviseur
+  if (canbus.get_verou_tel() && !(canbus.get_contact()))
+    retro.close();
+  else if (!canbus.get_verou_tel() || canbus.get_contact())
+    retro.open();
 }
