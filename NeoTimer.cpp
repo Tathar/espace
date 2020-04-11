@@ -5,8 +5,7 @@ NeoTimer::NeoTimer(unsigned long _t = 1000) //Default 1 second interval if not s
 {
     this->_timer.time = _t;
     this->_timer.started = false;
-    this->_timer.last = 0;
-    this->_timer.remaining = 0;
+    this->_timer.start = 0;
 }
 
 //Default destructor
@@ -78,7 +77,7 @@ boolean NeoTimer::repeat()
     }
     if (!this->_timer.started)
     {
-        this->_timer.last = millis();
+        this->_timer.start = millis();
         this->_timer.started = true;
     }
     return false;
@@ -97,25 +96,61 @@ boolean NeoTimer::done()
 {
     if (!this->_timer.started)
     {
-        // Serial.println("NeoTimer::done false");
+        // Serial.println("NeoTimer::done false 1");
         return false;
     }
 
-    unsigned long elapse = millis() - this->_timer.last;
-    this->_timer.last = millis();
-    if (elapse > 0)
+    // unsigned long elapse = millis() - this->_timer.last;
+    // this->_timer.last = millis();
+    // if (elapse > 0)
+    // {
+    // this->_timer.remaining -= elapse;
+    // }
+
+    // if (elapse > 0 && this->_timer.remaining <= 0)
+    // {
+    //     this->_timer.done = true;
+    //     // Serial.println("NeoTimer::done true");
+    //     return true;
+    // }
+
+    unsigned long time = millis();
+    if (this->_timer.time + this->_timer.start < this->_timer.start) //nececite un debordement
     {
-        this->_timer.remaining -= elapse;
+        if (time >= this->_timer.start) //le compteur n a pas encors deborde
+        {
+            if (time >= this->_timer.time + this->_timer.start)
+            {
+                this->_timer.done = true;
+
+                // Serial.println("NeoTimer::done true 1");
+                return true;
+            }
+        }
+        else //le compeur a deborde
+        {
+            if (time >= this->_timer.time - (0xFFFFFFFF - this->_timer.start))
+            {
+                this->_timer.done = true;
+
+                // Serial.println("NeoTimer::done true 2");
+                return true;
+            }
+            /* code */
+        }
+    }
+    else //nececite pas de debordement
+    {
+        if (time >= this->_timer.time + this->_timer.start)
+        {
+            this->_timer.done = true;
+
+            // Serial.println("NeoTimer::done true 3");
+            return true;
+        }
     }
 
-    if (elapse > 0 && this->_timer.remaining <= 0)
-    {
-        this->_timer.done = true;
-        // Serial.println("NeoTimer::done true");
-        return true;
-    }
-
-    // Serial.println("NeoTimer::done false");
+    // Serial.println("NeoTimer::done false 2");
     return false;
 }
 
@@ -123,14 +158,9 @@ boolean NeoTimer::front()
 {
     if (!this->_timer.done && done())
     {
-        //Serial.println("NeoTimer::front true");
+        // Serial.println("NeoTimer::front true");
         return true;
     }
-    else if (this->_timer.done)
-    {
-        done(); // update remaining
-    }
-
     // Serial.println("NeoTimer::front false");
     return false;
 }
@@ -158,7 +188,7 @@ void NeoTimer::reset()
 {
     this->_timer.started = false;
     this->_timer.done = false;
-    this->_timer.remaining = this->_timer.time;
+    this->_timer.start = millis();
 }
 
 /*
@@ -171,8 +201,8 @@ void NeoTimer::start(unsigned long times = NEOTIMER_INDEFINITE)
         if (times != NEOTIMER_INDEFINITE)
             this->set(times);
         this->reset();
-        this->_timer.last = millis();
         this->_timer.started = true;
+        this->_timer.start = millis();
     }
 }
 
@@ -214,10 +244,17 @@ boolean NeoTimer::started()
  */
 unsigned long NeoTimer::elapsed()
 {
-    if (this->_timer.remaining > 0)
-        return this->_timer.time - this->_timer.remaining;
-    else
-        return (this->_timer.remaining * -1) + this->_timer.time;
+    unsigned long time = millis();
+
+    if (time > this->_timer.start) // pas de debordement
+    {
+        return time - this->_timer.start;
+    }
+    else //debordement
+    {
+
+        return ((0xFFFFFFFF - this->_timer.start) + time);
+    }
 }
 
 /*
@@ -225,5 +262,5 @@ unsigned long NeoTimer::elapsed()
  */
 long NeoTimer::remaining()
 {
-    return this->_timer.remaining;
+    return this->_timer.time - this->elapsed();
 }

@@ -102,11 +102,11 @@
 #define POT1_SHUTDOWN 0x22
 #define BOTH_POT_SHUTDOWN 0x23
 
-// pin 40: relais frein de parking
-// pin 39: relais marche arriere
+// pin 32: relais frein de parking
+// pin 34: relais marche arriere
 
-#define PIN_AR_FP 34 //logique inversé
-#define PIN_AR_MA 36 //logique inversé
+#define PIN_AR_FP 32 //logique inversé
+#define PIN_AR_MA 34 //logique inversé
 
 //retroviseur
 // pin 38: relais ouverture retro

@@ -35,8 +35,8 @@ private:
     struct myTimer
     {
         unsigned long time;
-        unsigned long last;
-        long remaining;
+        unsigned long start;
+        // long remaining;
         boolean started;
         boolean done;
     };
