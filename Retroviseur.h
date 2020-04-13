@@ -1,6 +1,9 @@
 #ifndef RETROVISEUR_H
 #define RETROVISEUR_H
 
+#include "config.h"
+#include <CLI.h>
+
 class Retroviseur : CLI_Command
 {
 public:

@@ -18,7 +18,10 @@
             "intelliSenseMode": "gcc-x64",
             "compilerPath": "/usr/bin/clang-6.0",
             "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++17",
+            "defines": [
+                "USBCON"
+            ]
         }
     ],
     "version": 4

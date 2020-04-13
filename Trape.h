@@ -1,5 +1,8 @@
-#ifndef TRAP_H
-#define TRAP_H
+#ifndef TRAPE_H
+#define TRAPE_H
+
+#include "config.h"
+#include <CLI.h>
 
 class Trape : CLI_Command
 {

@@ -1,6 +1,7 @@
 #ifndef AUTORADIO_H
 #define AUTORADIO_H
 
+#include <Arduino.h>
 #include "NeoTimer.h"
 #include <CLI.h>
 #include <SPI.h>

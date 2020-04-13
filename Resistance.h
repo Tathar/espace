@@ -1,6 +1,9 @@
 #ifndef RESISTANCE_H
 #define RESISTANCE_H
 
+#include "config.h"
+#include <CLI.h>
+
 class Resistance : CLI_Command
 {
 public:

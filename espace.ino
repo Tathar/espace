@@ -3,7 +3,6 @@
 #include <mcp_can.h>
 #include <SPI.h>
 #include <Servo.h>
-// #include "MyTimer.h"
 #include "NeoTimer.h"
 #include <CLI.h>
 #include "cav.h"
@@ -14,8 +13,6 @@
 
 #include "debounce.h"
 #include "TtFront.h"
-// #include <HardwareSerial.h>
-// #include <Serial.h>
 
 #define IF_MASK(value, mask) ((value & mask) == value)
 
@@ -37,7 +34,7 @@ public:
                                                           PSTR("can"),
                                                           PSTR("CAN Bus"),
                                                           PSTR("Usage:\t\tcan <commande>\n"
-                                                               "Where:\t<commande>\t _debug, std"))
+                                                               "Where:\t<commande>\t debug, get"))
   // CAN_ESPACE() : can(PIN_SPI_CS_CAN)
 
   {
@@ -53,23 +50,23 @@ public:
   void setup()
   {
     pinMode(PIN_CB_DATA, INPUT);
-    Serial.println("CAN BUS init !");
+    Serial.println(PSTR("CAN BUS init !"));
     int loop = 5;
     while (loop >= 0)
     {
-      Serial.println("CAN BUS init !");
+      Serial.println(PSTR("CAN BUS init !"));
       if (CAN_OK == can.begin(CAN_250KBPS))
       // initialisation du can bus : baudrate = 250k
       {
-        Serial.println(F("CAN BUS init ok!"));
+        Serial.println(PSTR("CAN BUS init ok!"));
         init = true;
         break; // on sort du while.
       }
       else
       {
         loop--;
-        Serial.println(F("CAN BUS init echec !"));
-        Serial.println(F("Init CAN BUS a nouveau"));
+        Serial.println(PSTR("CAN BUS init echec !"));
+        Serial.println(PSTR("Init CAN BUS a nouveau"));
       }
       delay(100);
     }
@@ -96,13 +93,13 @@ public:
       Flag_Recv = false;
       while (can.checkReceive() == CAN_MSGAVAIL)
       {
-        Serial.println("receve data");
+        Serial.println(PSTR("receve data"));
         can.readMsgBuf(&len, rxBuf); // Read data: len = data length, buf = data byte(s)
         rxId = can.getCanId();
 
         if (rxId == 0x766 && len == 8)
         {
-          Serial.println("receve data 0x766");
+          Serial.println(PSTR("receve data 0x766"));
 
           porte = rxBuf[0];
 
@@ -204,18 +201,18 @@ public:
     }
   };
 
-  bool get_frein_parking() { return frein_parking; };
-  bool get_marche_arriere() { return marche_arriere; };
-  bool get_vitesse() { return vitesse; };
-  bool get_embrayage() { return embrayage; };
-  bool get_contact() { return contact; };
-  bool get_pre_contact() { return pre_contact; };
-  bool get_verou() { return this->verou; };
-  bool get_verou_tel() { return this->verou_tel && this->verou; };
-  unsigned int get_porte() { return porte; };
-  unsigned int get_accelerateur() { return map(accelerateur, 0x08, 0xFD, 0, 100); };
-  unsigned int get_regime() { return regime * 0.125; };
-  float get_baterie() { return contact ? (baterie * 0.085789 + 10.8615) : 0; };
+  inline bool get_frein_parking() { return frein_parking; };
+  inline bool get_marche_arriere() { return marche_arriere; };
+  inline bool get_vitesse() { return vitesse; };
+  inline bool get_embrayage() { return embrayage; };
+  inline bool get_contact() { return contact; };
+  inline bool get_pre_contact() { return pre_contact; };
+  inline bool get_verou() { return this->verou; };
+  inline bool get_verou_tel() { return this->verou_tel && this->verou; };
+  inline unsigned int get_porte() { return porte; };
+  inline unsigned int get_accelerateur() { return map(accelerateur, 0x08, 0xFD, 0, 100); };
+  inline unsigned int get_regime() { return regime * 0.125; };
+  inline float get_baterie() { return contact ? (baterie * 0.085789 + 10.8615) : 0; };
 
   // CLI set parametre
   bool setparams(const char *params)
