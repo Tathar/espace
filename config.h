@@ -1,3 +1,5 @@
+#ifndef CONFIG_H
+#define CONFIG_H
 // SPI :
 // pin 48: Digital Pot (logique inversé)
 // pin 50: MISO
@@ -105,8 +107,8 @@
 // pin 32: relais frein de parking
 // pin 34: relais marche arriere
 
-#define PIN_AR_FP 32 //logique inversé
-#define PIN_AR_MA 34 //logique inversé
+#define PIN_AR_MA 32 //logique inversé
+#define PIN_AR_FP 34 //logique inversé
 
 //retroviseur
 // pin 38: relais ouverture retro
@@ -120,40 +122,48 @@
 #define RV_TIME 3000 //temp d ouverture et fermeture du retroviseur en ms
 
 //Trape autoradio
-// pin 4 (PWM)
-// pin 35 relais alime servo
+// pin 3 (PWM)
+// pin 30 relais alime servo
 
-#define PIN_TRAP_PWM 4
-#define PIN_TRAP_ALIM 38
+#define PIN_TRAP_PWM 3
+#define PIN_TRAP_ALIM 30
 
-#define TRAP_STOP 45
-#define TRAP_SPEED 45
-#define TRAP_TIME 1000
+#define TRAP_STOP 50
+#define TRAP_SPEED 10
+#define TRAP_OPEN_TIME 4000
+#define TRAP_CLOSE_TIME 2000
 
-#define TRAP_UP TRAP_STOP + TRAP_SPEED
-#define TRAP_DOWN TRAP_STOP - TRAP_SPEED
+#define TRAP_UP TRAP_STOP - TRAP_SPEED
+#define TRAP_DOWN TRAP_STOP + TRAP_SPEED
 
 //resistance chauffante
 // pin 38 : relais
 // pin 40 : relais
 // pin 42 : relais
 
-#define PIN_O_RC_1 42  //logique inversé
-#define PIN_O_RC_23 40 //logique inversé
-#define PIN_O_RC_4 38  //logique inversé
+#define PIN_RC_O_1 42  //logique inversé
+#define PIN_RC_O_23 40 //logique inversé
+#define PIN_RC_O_4 38  //logique inversé
 
 //entree resistance chauffante
 
-#define PIN_I_RC_1 42  //logique inversé
-#define PIN_I_RC_23 40 //logique inversé
-#define PIN_I_RC_4 38  //logique inversé
+#define PIN_RC_I_1 42  //logique inversé
+#define PIN_RC_I_23 40 //logique inversé
+#define PIN_RC_I_4 38  //logique inversé
 
 #define RC_OFF 0
 #define RC_1 1
 #define RC_23 2
 #define RC_4 4
+
+#define RC_123 3
 #define RC_14 5
-#define RC_ALL 7
+#define RC_234 6
+
+#define RC_1234 7
+#define RC_ALL RC_1234
 
 #define DEBOUNCE 20
 #define LONG_DEBOUNCE 80
+
+#endif

@@ -12,11 +12,13 @@ class CAV : CLI_Command
 public:
     String data;
     //constructeur
+
     CAV(CLI &cli) : CLI_Command(cli,
                                 PSTR("cav"),
                                 PSTR("Commande au volant"),
                                 PSTR("Usage:\t\tcav <commande>\n"
                                      "Where:\t<commande>\t debug, std"))
+    // CAV()
     {
         stats = 0;
         cursor = 0;
@@ -138,7 +140,7 @@ public:
         {
             Serial.print("cav = ");
             Serial.println(debounce_stats, BIN);
-            Serial.println(_debug);
+            Serial.println(debug);
         }
 
         int new_molette = debounce_stats & CV_MASK_MOL;
@@ -224,7 +226,7 @@ public:
         return ret;
     }
 
-    // CLI set parametre
+    // // CLI set parametre
     bool setparams(const char *params)
     {
         _params = params;
@@ -265,12 +267,13 @@ public:
         return false;
     }
 
+    uint8_t _debug;
+
 private:
     int stats;
     unsigned int cursor;
     unsigned long debounce;
     const char *_params;
-    uint8_t _debug;
 
     inline void UsePin(int Pin)
     {
