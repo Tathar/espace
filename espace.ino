@@ -50,23 +50,23 @@ public:
   void setup()
   {
     pinMode(PIN_CB_DATA, INPUT);
-    Serial.println(PSTR("CAN BUS init !"));
+    Serial.println(F("CAN BUS init !"));
     int loop = 5;
     while (loop >= 0)
     {
-      Serial.println(PSTR("CAN BUS init !"));
-      if (CAN_OK == can.begin(CAN_250KBPS))
+      Serial.println(F("CAN BUS init !"));
+      if (CAN_OK == can.begin(CAN_250KBPS, MCP_8MHz))
       // initialisation du can bus : baudrate = 250k
       {
-        Serial.println(PSTR("CAN BUS init ok!"));
+        Serial.println(F("CAN BUS init ok!"));
         init = true;
         break; // on sort du while.
       }
       else
       {
         loop--;
-        Serial.println(PSTR("CAN BUS init echec !"));
-        Serial.println(PSTR("Init CAN BUS a nouveau"));
+        Serial.println(F("CAN BUS init echec !"));
+        Serial.println(F("Init CAN BUS a nouveau"));
       }
       delay(100);
     }
@@ -88,18 +88,15 @@ public:
 
     if (Flag_Recv) //if data
     {
-
-      // Serial.println("receve interupt");
       Flag_Recv = false;
       while (can.checkReceive() == CAN_MSGAVAIL)
       {
-        Serial.println(PSTR("receve data"));
+        // Serial.println(("receve data"));
         can.readMsgBuf(&len, rxBuf); // Read data: len = data length, buf = data byte(s)
         rxId = can.getCanId();
 
         if (rxId == 0x766 && len == 8)
         {
-          Serial.println(PSTR("receve data 0x766"));
 
           porte = rxBuf[0];
 
@@ -156,9 +153,9 @@ public:
         if (rxId == 0x449 && len == 6)
         {
           baterie = rxBuf[4];
-          // Serial.print("baterie = ");
+          // Serial.print(F("baterie = "));
           // Serial.println(rxBuf[4], BIN);
-          // Serial.print("baterie = ");
+          // Serial.print(F("baterie = "));
           // Serial.println(rxBuf[4], HEX);
         }
 
@@ -167,34 +164,34 @@ public:
           if (rxId == 0x766)
           {
             if (embrayage)
-              Serial.println("Embrayage");
+              Serial.println(F("Embrayage"));
 
             if (vitesse)
-              Serial.println("Vitesse");
+              Serial.println(F("Vitesse"));
 
             if (marche_arriere)
-              Serial.println("marche_arriere");
+              Serial.println(F("marche_arriere"));
           }
 
           if (rxId == 0x711)
           {
 
             if (frein_parking)
-              Serial.println("frein_parking");
+              Serial.println(F("frein_parking"));
           }
           if (rxId == 0x0FA && len == 7)
           {
-            Serial.print("accel = ");
+            Serial.print(F("accel = "));
             Serial.println(get_accelerateur());
-            Serial.print("regim = ");
+            Serial.print(F("regim = "));
             Serial.println(get_regime());
           }
 
           if (rxId == 0x449 && len == 6)
           {
-            Serial.print("baterie = ");
+            Serial.print(F("baterie = "));
             Serial.print(get_baterie());
-            Serial.println(" V");
+            Serial.println(F(" V"));
           }
         }
       }
@@ -227,55 +224,55 @@ public:
     {
       if (_debug)
       {
-        Serial.println("can = debug off");
+        Serial.println(F("can = debug off"));
         _debug = false;
       }
       else
       {
-        Serial.println("can = debug on");
+        Serial.println(F("can = debug on"));
         _debug = true;
       }
     }
     else if (strcmp(_params, "get") == 0)
     {
       if (get_frein_parking())
-        Serial.println("frein de parking");
+        Serial.println(F("frein de parking"));
 
       if (get_marche_arriere())
-        Serial.println("marche arriere");
+        Serial.println(F("marche arriere"));
 
       if (get_vitesse())
-        Serial.println("vitesse");
+        Serial.println(F("vitesse"));
 
       if (get_embrayage())
-        Serial.println("embrayage");
+        Serial.println(F("embrayage"));
 
       if (get_contact())
-        Serial.println("contact");
+        Serial.println(F("contact"));
 
       if (get_pre_contact())
-        Serial.println("pre_contact");
+        Serial.println(F("pre_contact"));
 
       if (get_verou())
-        Serial.println("verou");
+        Serial.println(F("verou"));
 
       if (get_verou_tel())
-        Serial.println("verou_tel");
+        Serial.println(F("verou_tel"));
 
       if (get_porte())
-        Serial.println("porte");
+        Serial.println(F("porte"));
 
-      Serial.print("accelerateur = ");
+      Serial.print(F("accelerateur = "));
       Serial.print(get_accelerateur());
-      Serial.println(" %");
+      Serial.println(F(" %"));
 
-      Serial.print("regime = ");
+      Serial.print(F("regime = "));
       Serial.print(get_regime());
-      Serial.println(" t/m");
+      Serial.println(F(" t/m"));
 
-      Serial.print("batterie = ");
+      Serial.print(F("batterie = "));
       Serial.print(get_baterie());
-      Serial.println(" V");
+      Serial.println(F(" V"));
     }
 
     return false;
@@ -342,7 +339,7 @@ void setup()
 
 void loop()
 {
-  // Serial.println("New Loop");
+  // Serial.println(F("New Loop"));
   // put your main code here, to run repeatedly:
   commande.loop();
   ar.loop();
@@ -359,8 +356,8 @@ void loop()
   // if (commande.get_action() == AR_VOL_DOWN)
   //   trape.open();
 
-  // ar.set_FP(!canbus.get_frein_parking());
-  // ar.set_MA(canbus.get_marche_arriere());
+  ar.set_FP(!canbus.get_frein_parking());
+  ar.set_MA(canbus.get_marche_arriere());
 
   //gestion retroviseur
 

@@ -96,7 +96,7 @@ boolean NeoTimer::done()
 {
     if (!this->_timer.started)
     {
-        // Serial.println("NeoTimer::done false 1");
+        // Serial.println(F("NeoTimer::done false 1"));
         return false;
     }
 
@@ -110,7 +110,7 @@ boolean NeoTimer::done()
     // if (elapse > 0 && this->_timer.remaining <= 0)
     // {
     //     this->_timer.done = true;
-    //     // Serial.println("NeoTimer::done true");
+    //     // Serial.println(F("NeoTimer::done true"));
     //     return true;
     // }
 
@@ -123,7 +123,7 @@ boolean NeoTimer::done()
             {
                 this->_timer.done = true;
 
-                // Serial.println("NeoTimer::done true 1");
+                // Serial.println(F("NeoTimer::done true 1"));
                 return true;
             }
         }
@@ -133,7 +133,7 @@ boolean NeoTimer::done()
             {
                 this->_timer.done = true;
 
-                // Serial.println("NeoTimer::done true 2");
+                // Serial.println(F("NeoTimer::done true 2"));
                 return true;
             }
             /* code */
@@ -145,12 +145,12 @@ boolean NeoTimer::done()
         {
             this->_timer.done = true;
 
-            // Serial.println("NeoTimer::done true 3");
+            // Serial.println(F("NeoTimer::done true 3"));
             return true;
         }
     }
 
-    // Serial.println("NeoTimer::done false 2");
+    // Serial.println(F("NeoTimer::done false 2"));
     return false;
 }
 
@@ -158,10 +158,10 @@ boolean NeoTimer::front()
 {
     if (!this->_timer.done && done())
     {
-        // Serial.println("NeoTimer::front true");
+        // Serial.println(F("NeoTimer::front true"));
         return true;
     }
-    // Serial.println("NeoTimer::front false");
+    // Serial.println(F("NeoTimer::front false"));
     return false;
 }
 

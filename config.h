@@ -128,12 +128,12 @@
 #define PIN_TRAP_PWM 3
 #define PIN_TRAP_ALIM 30
 
-#define TRAP_STOP 50
-#define TRAP_SPEED 10
-#define TRAP_OPEN_TIME 4000
-#define TRAP_CLOSE_TIME 2000
+#define TRAP_STOP 48
+#define TRAP_SPEED 12
+#define TRAP_OPEN_TIME 3500
+#define TRAP_CLOSE_TIME 2500
 
-#define TRAP_UP TRAP_STOP - TRAP_SPEED
+#define TRAP_UP TRAP_STOP - 15
 #define TRAP_DOWN TRAP_STOP + TRAP_SPEED
 
 //resistance chauffante

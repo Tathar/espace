@@ -55,7 +55,7 @@ public:
         if (this->_open == false)
         {
             if (this->_debug == 1)
-                Serial.println("trape Open");
+                Serial.println(F("trape Open"));
             this->_servo.write(TRAP_UP);
             Serial.println(this->_servo.read());
             Serial.println(digitalRead(PIN_TRAP_ALIM));
@@ -72,7 +72,7 @@ public:
         if (this->_open == true)
         {
             if (this->_debug == 1)
-                Serial.println("trape Down");
+                Serial.println(F("trape Down"));
             this->_servo.write(TRAP_DOWN);
 
             Serial.println(this->_servo.read());
@@ -88,7 +88,7 @@ public:
     void stop()
     {
         if (this->_debug == 1)
-            Serial.println("trape Stop");
+            Serial.println(F("trape Stop"));
 
         Serial.println(digitalRead(PIN_TRAP_ALIM));
         digitalWrite(PIN_TRAP_ALIM, HIGH);
@@ -110,23 +110,23 @@ public:
         {
             if (this->_debug == 1)
             {
-                Serial.println("trape _debug Off");
+                Serial.println(F("trape _debug Off"));
                 this->_debug = 0;
             }
             else
             {
-                Serial.println("trape _debug On");
+                Serial.println(F("trape _debug On"));
                 this->_debug = 1;
             }
         }
         else if (strcmp(_params, "open") == 0)
         {
-            Serial.println("Trape open");
+            Serial.println(F("Trape open"));
             this->open();
         }
         else if (strcmp(_params, "close") == 0)
         {
-            Serial.println("trape close");
+            Serial.println(F("trape close"));
             this->close();
         }
 

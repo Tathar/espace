@@ -81,32 +81,32 @@ public:
     {
         if (_params == 0)
         {
-            Serial.println("resistance = 0");
+            Serial.println(F("resistance = 0"));
             set(RC_OFF);
         }
         else if (_params == 1)
         {
-            Serial.println("resistance = 1");
+            Serial.println(F("resistance = 1"));
             set(PIN_RC_O_1);
         }
         else if (_params == 2)
         {
-            Serial.println("resistance = 23");
+            Serial.println(F("resistance = 23"));
             set(PIN_RC_O_23);
         }
         else if (_params == 3)
         {
-            Serial.println("resistance = 23");
+            Serial.println(F("resistance = 23"));
             set(PIN_RC_O_23);
         }
         else if (_params == 23)
         {
-            Serial.println("resistance = 23");
+            Serial.println(F("resistance = 23"));
             set(PIN_RC_O_23);
         }
         else if (_params == 4)
         {
-            Serial.println("resistance = 4");
+            Serial.println(F("resistance = 4"));
             set(PIN_RC_O_4);
         }
 

@@ -16,7 +16,7 @@ public:
         if (value != _front)
         {
             _front = value;
-            // Serial.println("TtFront::Front = True");
+            // Serial.println(F("TtFront::Front = True"));
             return true;
         }
         return false;
@@ -27,7 +27,7 @@ public:
         if (value == true && value != _front)
         {
             _front = value;
-            // Serial.println("TtFront::True = True");
+            // Serial.println(F("TtFront::True = True"));
             return true;
         }
         return false;
@@ -38,7 +38,7 @@ public:
         if (value == false && value != _front)
         {
             _front = value;
-            // Serial.println("TtFront::False = True");
+            // Serial.println(F("TtFront::False = True"));
             return true;
         }
         return false;

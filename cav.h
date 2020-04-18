@@ -57,35 +57,35 @@ public:
         bool a3 = !digitalRead(CV_A3);
         bool b3 = !digitalRead(CV_B3);
 
-        // Serial.print("a1 = ");
+        // Serial.print(F("a1 = "));
         // Serial.println(a1);
-        // Serial.print("a3 = ");
+        // Serial.print(F("a3 = "));
         // Serial.println(a3);
-        // Serial.print("b3 = ");
+        // Serial.print(F("b3 = "));
         // Serial.println(b3);
 
-        // Serial.println("");
+        // Serial.println(F(""));
         int loop_stats;
 
         loop_stats = a1 ? 1 : 0;
-        // Serial.print("loop_stats = ");
+        // Serial.print(F("loop_stats = "));
         // Serial.println(loop_stats);
         loop_stats = a3 ? loop_stats + 2 : loop_stats;
-        // Serial.print("loop_stats = ");
+        // Serial.print(F("loop_stats = "));
         // Serial.println(loop_stats);
         loop_stats = b3 ? loop_stats + 4 : loop_stats;
 
         loop_stats = loop_stats << cursor * 3;
-        // Serial.print("loop_stats = ");
+        // Serial.print(F("loop_stats = "));
         // Serial.println(loop_stats);
 
         int sup = CV_MASK_CURSOR << cursor * 3;
         // sup = 0b1111111111 ^ sup;
         sup = 0b111111111 ^ sup;
-        // Serial.print("sup = ");
+        // Serial.print(F("sup = "));
         // Serial.println(sup);
         stats = stats & sup;
-        // Serial.print("stats = ");
+        // Serial.print(F("stats = "));
         // Serial.println(stats);
         stats = stats | loop_stats;
 
@@ -140,7 +140,7 @@ public:
 
         if (_debug == 1)
         {
-            Serial.print("cav = ");
+            Serial.print(F("cav = "));
             Serial.println(debounce_stats, BIN);
             Serial.println(debug);
         }
@@ -152,26 +152,26 @@ public:
             {
                 ret = AR_NEXT;
                 if (_debug != 0 && debug != ret)
-                    Serial.println("cav Next");
-                // Serial.println("Next");
+                    Serial.println(F("cav Next"));
+                // Serial.println(F("Next"));
             }
             else if (molette == CV_MOL_1 && new_molette == CV_MOL_3) // 1 -> 3
             {
                 ret = AR_PREV;
                 if (_debug != 0 && debug != ret)
-                    Serial.println("cav Prev");
+                    Serial.println(F("cav Prev"));
             }
             else if (new_molette > molette) // 1 -> 2 ou 2 -> 3
             {
                 ret = AR_NEXT;
                 if (_debug != 0 && debug != ret)
-                    Serial.println("cav next");
+                    Serial.println(F("cav next"));
             }
             else if (new_molette < molette) // 3 -> 2 ou 2 -> 1
             {
                 ret = AR_PREV;
                 if (_debug != 0 && debug != ret)
-                    Serial.println("cav prev");
+                    Serial.println(F("cav prev"));
             }
             molette = new_molette;
         }
@@ -179,49 +179,49 @@ public:
         {
             ret = AR_MUTE;
             if (_debug != 0 && debug != ret)
-                Serial.println("cav Mute");
+                Serial.println(F("cav Mute"));
         }
         else if ((debounce_stats & CV_BTN_UP_LFT_RGT) == CV_BTN_UP_LFT_RGT) // Bouton haut droite et gauche
         {
             ret = AR_BAND;
             if (_debug != 0 && debug != ret)
-                Serial.println("cav Band");
+                Serial.println(F("cav Band"));
         }
         else if ((debounce_stats & CV_BTN_UP_LFT_BTN_DOWN) == CV_BTN_UP_LFT_BTN_DOWN) // Bouton haut droite et boutons bas
         {
             ret = AR_DISPLAY;
             if (_debug != 0 && debug != ret)
-                Serial.println("cav Display");
+                Serial.println(F("cav Display"));
         }
         else if (debounce_long_stats & CV_BTN_DOWN) // Bouton bas
         {
             ret = AR_SOURCE;
             if (_debug != 0 && debug != ret)
-                Serial.println("cav Source");
+                Serial.println(F("cav Source"));
         }
         else if (debounce_long_stats & CV_VOL_DOWN) // Volume -
         {
             ret = AR_VOL_DOWN;
             if (_debug != 0 && debug != ret)
-                Serial.println("cav Vol-");
+                Serial.println(F("cav Vol-"));
         }
         else if (debounce_long_stats & CV_VOL_UP) // Volume +
         {
             ret = AR_VOL_UP;
             if (_debug != 0 && debug != ret)
-                Serial.println("cav Vol+");
+                Serial.println(F("cav Vol+"));
         }
         else if (debounce_long_stats & CV_BTN_UP_RGT) // Bouton haut droite
         {
             ret = AR_PRESET_UP;
             if (_debug != 0 && debug != ret)
-                Serial.println("cav preset +");
+                Serial.println(F("cav preset +"));
         }
         else if (debounce_long_stats & CV_BTN_UP_LFT) // Bouton haut gauche
         {
             ret = AR_PRESET_DOWN;
             if (_debug != 0 && debug != ret)
-                Serial.println("cav preset-");
+                Serial.println(F("cav preset-"));
         }
 
         debug = ret;
@@ -241,12 +241,12 @@ public:
         {
             if (_debug == 1)
             {
-                Serial.println("Debug = off");
+                Serial.println(F("Debug = off"));
                 _debug = 0;
             }
             else
             {
-                Serial.println("Debug = on");
+                Serial.println(F("Debug = on"));
                 _debug = 1;
             }
         }
@@ -254,12 +254,12 @@ public:
         {
             if (_debug == 2)
             {
-                Serial.println("display = off");
+                Serial.println(F("display = off"));
                 _debug = 0;
             }
             else
             {
-                Serial.println("display = on");
+                Serial.println(F("display = on"));
                 _debug = 2;
             }
         }

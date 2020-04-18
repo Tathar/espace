@@ -72,12 +72,12 @@ public:
     {
         if (strcmp(_params, "open") == 0)
         {
-            Serial.println("action = open");
+            Serial.println(F("action = open"));
             open();
         }
         else if (strcmp(_params, "close") == 0)
         {
-            Serial.println("action = close");
+            Serial.println(F("action = close"));
             close();
         }
 
