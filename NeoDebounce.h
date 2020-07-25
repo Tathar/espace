@@ -7,7 +7,7 @@ class NeoDebounce
 {
 public:
     //Methods
-    NeoDebounce(unsigned long time = 50); //Constructor
+    NeoDebounce(long unsigned int times = 50); //Constructor
 
     boolean stats(boolean stats); //Indicates debonced stats
     boolean front(boolean stats); //Returns true at debounced transitions stats.

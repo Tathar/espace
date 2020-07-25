@@ -16,7 +16,7 @@ public:
     void setup()
     {
         pinMode(PIN_TRAP_ALIM, OUTPUT); // set pin to output
-        digitalWrite(PIN_TRAP_ALIM, HIGH);
+        digitalWrite(PIN_TRAP_ALIM, LOW);
 
         this->_servo.attach(PIN_TRAP_PWM);
         this->_servo.write(TRAP_STOP);
@@ -59,7 +59,7 @@ public:
             this->_servo.write(TRAP_UP);
             Serial.println(this->_servo.read());
             Serial.println(digitalRead(PIN_TRAP_ALIM));
-            digitalWrite(PIN_TRAP_ALIM, LOW);
+            digitalWrite(PIN_TRAP_ALIM, HIGH);
             Serial.println(digitalRead(PIN_TRAP_ALIM));
             this->_timer.reset();
             this->_timer.start(TRAP_OPEN_TIME);
@@ -77,7 +77,7 @@ public:
 
             Serial.println(this->_servo.read());
             Serial.println(digitalRead(PIN_TRAP_ALIM));
-            digitalWrite(PIN_TRAP_ALIM, LOW);
+            digitalWrite(PIN_TRAP_ALIM, HIGH);
             Serial.println(digitalRead(PIN_TRAP_ALIM));
             this->_timer.reset();
             this->_timer.start(TRAP_CLOSE_TIME);
@@ -91,7 +91,7 @@ public:
             Serial.println(F("trape Stop"));
 
         Serial.println(digitalRead(PIN_TRAP_ALIM));
-        digitalWrite(PIN_TRAP_ALIM, HIGH);
+        digitalWrite(PIN_TRAP_ALIM, LOW);
         Serial.println(digitalRead(PIN_TRAP_ALIM));
         this->_servo.write(TRAP_STOP);
         // Serial.println(this->_servo.read());

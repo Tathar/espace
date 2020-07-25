@@ -9,6 +9,7 @@ AutoRadio::AutoRadio(CLI &cli) : CLI_Command(cli,
                                                   "Where:\t<commande>\t vol+, vol-, mute, ..."))
 {
     _debug = 0;
+    _params = nullptr;
 };
 
 void AutoRadio::setup()
@@ -42,7 +43,7 @@ void AutoRadio::loop()
 
 void AutoRadio::set_audio(int val)
 {
-    static int old_val = 0;
+    //static int old_val = 0;
     // if (old_val != val)
     {
         // if (val == NONE)
@@ -81,7 +82,7 @@ void AutoRadio::set_audio(int val)
                 Serial.println(val);
             }
         }
-        old_val = val;
+        //old_val = val;
     }
 }
 

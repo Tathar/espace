@@ -1,7 +1,7 @@
 
 #include "NeoDebounce.h"
 
-NeoDebounce::NeoDebounce(unsigned long times = 50) //Constructor
+NeoDebounce::NeoDebounce(long unsigned int times) //Constructor
 {
     this->_timer.set(times);
     this->first = true;
@@ -32,7 +32,10 @@ boolean NeoDebounce::stats(boolean stats) //Indicates debonced stats
         else
             return !stats;
     }
+
+    return stats;
 }
+
 boolean NeoDebounce::front(boolean stats) //Returns true at debounced transitions stats.
 {
     boolean debounced_stats = this->stats(stats);

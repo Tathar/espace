@@ -1,18 +1,20 @@
 #ifndef CONFIG_H
 #define CONFIG_H
+
+#include <pinout.h>
 // SPI :
 // pin 48: Digital Pot (logique inversé)
 // pin 50: MISO
 // pin 51: MOSI
 // pin 52: SCLK
 // pin 53 Can Bus (logique inversé)
-#define PIN_SPI_CS_DP 48
-#define PIN_SPI_CS_CAN 53
+//#define PIN_SPI_CS_DP 48
+//#define PIN_SPI_CS_CAN 53
 
 //Can Bus
 // Pin 2: interuption (données disponible)
 
-#define PIN_CB_DATA 2
+#define PIN_CB_DATA PIN_CAN_INTERUPT
 #define CB_ID_FP 0x766
 #define CB_MASK_MA 0x00
 #define CB_ADDRESS_FP 0x00
@@ -43,12 +45,12 @@
 // A2 => B3 Molette Cran 2
 // A2 => A1 Molette Cran 3
 
-#define CV_A1 31 // input = Vol + / Molette 3
-#define CV_A2 33 // Output =  Molette 1 2 3
-#define CV_A3 35 // input = Btn bas / Btn Haut Droite / molette 1
-#define CV_B1 37 // Output = Btn bas / vol + / Vol +
-#define CV_B2 39 // Output = Btn Haut droite / Btn haut gauche
-#define CV_B3 41 // input = Vol + / Molette 3
+#define CV_A1 PIN_CV_A1 // input = Vol + / Molette 3
+#define CV_A2 PIN_CV_A2 // Output =  Molette 1 2 3
+#define CV_A3 PIN_CV_A3 // input = Btn bas / Btn Haut Droite / molette 1
+#define CV_B1 PIN_CV_B1 // Output = Btn bas / vol + / Vol +
+#define CV_B2 PIN_CV_B2 // Output = Btn Haut droite / Btn haut gauche
+#define CV_B3 PIN_CV_B3 // input = Vol + / Molette 3
 
 #define NONE 0
 #define CV_BTN_DOWN 1
@@ -66,12 +68,13 @@
 #define CV_MASK_MOL 64 + 128 + 256
 #define CV_MASK_ALL 0xFFFF
 
+//todo
 // commande autoradio
 // pin 26: relais Tip
 // pin 28: relais Ring
 
-#define AR_TIP 28  //logique inversé
-#define AR_RING 26 //logique inversé
+#define AR_TIP PIN_PCB_RELAY_POT_2 //logique inversé
+#define AR_RING PIN_PCB_RELAY_1    //logique inversé pin26
 
 // source / 2 sec = off => 1.2
 // MUTE => 3.5
@@ -107,8 +110,8 @@
 // pin 32: relais frein de parking
 // pin 34: relais marche arriere
 
-#define PIN_AR_MA 32 //logique inversé
-#define PIN_AR_FP 34 //logique inversé
+#define PIN_AR_MA PIN_PCB_RELAY_2 //logique inversé
+#define PIN_AR_FP PIN_PCB_RELAY_3 //logique inversé
 
 //retroviseur
 // pin 38: relais ouverture retro
@@ -125,8 +128,8 @@
 // pin 3 (PWM)
 // pin 30 relais alime servo
 
-#define PIN_TRAP_PWM 3
-#define PIN_TRAP_ALIM 30
+#define PIN_TRAP_PWM PIN_PWM_SRV_1  //3
+#define PIN_TRAP_ALIM PIN_PWR_SRV_1 //30
 
 #define TRAP_STOP 48
 #define TRAP_SPEED 12
@@ -141,15 +144,15 @@
 // pin 40 : relais
 // pin 42 : relais
 
-#define PIN_RC_O_1 42  //logique inversé
-#define PIN_RC_O_23 40 //logique inversé
-#define PIN_RC_O_4 38  //logique inversé
+#define PIN_RC_O_1 PIN_PCB_RELAY_4  //logique inversé 42
+#define PIN_RC_O_23 PIN_PCB_RELAY_5 //logique inversé 40
+#define PIN_RC_O_4 PIN_PCB_RELAY_6  //logique inversé 38
 
 //entree resistance chauffante
 
-#define PIN_RC_I_1 42  //logique inversé
-#define PIN_RC_I_23 40 //logique inversé
-#define PIN_RC_I_4 38  //logique inversé
+#define PIN_RC_I_1 7  //logique inversé Beige
+#define PIN_RC_I_23 6 //logique inversé Noir
+#define PIN_RC_I_4 5  //logique inversé Violet
 
 #define RC_OFF 0
 #define RC_1 1

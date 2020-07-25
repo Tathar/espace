@@ -42,7 +42,7 @@ public:
     //
     void set(int mode)
     {
-        if ((mode & PIN_RC_O_1) == PIN_RC_O_1)
+        if ((mode & RC_1) == RC_1)
         {
             digitalWrite(PIN_RC_O_1, LOW);
         }
@@ -87,27 +87,27 @@ public:
         else if (_params == 1)
         {
             Serial.println(F("resistance = 1"));
-            set(PIN_RC_O_1);
+            set(RC_1);
         }
         else if (_params == 2)
         {
             Serial.println(F("resistance = 23"));
-            set(PIN_RC_O_23);
+            set(RC_23);
         }
         else if (_params == 3)
         {
             Serial.println(F("resistance = 23"));
-            set(PIN_RC_O_23);
+            set(RC_23);
         }
         else if (_params == 23)
         {
             Serial.println(F("resistance = 23"));
-            set(PIN_RC_O_23);
+            set(RC_23);
         }
         else if (_params == 4)
         {
             Serial.println(F("resistance = 4"));
-            set(PIN_RC_O_4);
+            set(RC_4);
         }
 
         // cli.print_P(PSTR("Autoradio "));

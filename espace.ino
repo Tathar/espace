@@ -29,6 +29,30 @@ static void MCP2515_ISR()
 
 class CAN_ESPACE : CLI_Command
 {
+
+private:
+  const char *_params;
+
+  MCP_CAN can;
+  // CLI &_cli;
+
+  long unsigned int rxId;
+  unsigned char len = 0;
+  unsigned char rxBuf[8];
+
+  bool frein_parking;
+  bool marche_arriere;
+  bool vitesse;
+  bool embrayage;
+  bool contact;
+  bool verou;
+  bool verou_tel;
+  int porte;
+  unsigned int accelerateur;
+  unsigned int regime;
+  bool pre_contact;
+  uint8_t baterie;
+
 public:
   CAN_ESPACE(CLI &cli) : can(PIN_SPI_CS_CAN), CLI_Command(cli,
                                                           PSTR("can"),
@@ -51,8 +75,8 @@ public:
   {
     pinMode(PIN_CB_DATA, INPUT);
     Serial.println(F("CAN BUS init !"));
-    int loop = 5;
-    while (loop >= 0)
+    int loop = 0;
+    while (loop <= 5)
     {
       Serial.println(F("CAN BUS init !"));
       if (CAN_OK == can.begin(CAN_250KBPS, MCP_8MHz))
@@ -64,9 +88,10 @@ public:
       }
       else
       {
-        loop--;
+        loop++;
         Serial.println(F("CAN BUS init echec !"));
         Serial.println(F("Init CAN BUS a nouveau"));
+        init = true;
       }
       delay(100);
     }
@@ -281,29 +306,6 @@ public:
   bool init;
 
   bool _debug;
-
-private:
-  const char *_params;
-
-  MCP_CAN can;
-  // CLI &_cli;
-
-  long unsigned int rxId;
-  unsigned char len = 0;
-  unsigned char rxBuf[8];
-
-  bool frein_parking;
-  bool marche_arriere;
-  bool vitesse;
-  bool embrayage;
-  bool contact;
-  bool verou;
-  bool verou_tel;
-  int porte;
-  unsigned int accelerateur;
-  unsigned int regime;
-  bool pre_contact;
-  uint8_t baterie;
 };
 
 // Initialize the Command Line Interface
@@ -374,10 +376,12 @@ void loop()
   else if (front_trape.True(canbus.get_pre_contact() || canbus.get_contact()))
     trape.open();
 
-  //gestion resistance chauffante
+  //gestion Batterie auxiliaire
 
   if (canbus.get_contact() && canbus.get_regime() > 500)
   {
-    resistance.set(resistance.get());
+    //resistance.set(resistance.get());
+    resistance.set(RC_ALL);
   }
+  // Serial.println(resistance.get());
 }
